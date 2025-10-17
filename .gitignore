@@ -22,6 +22,10 @@ dist/
 htmlcov/
 .tox/
 
+# Selenium artifacts (auto-generated during test runs)
+page_snapshots/
+screenshots/
+
 # IDE
 .vscode/
 .idea/
