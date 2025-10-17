@@ -16,6 +16,9 @@ selenium:
 test_data:
   base_url: https://grocerymate.masterschool.com/
   timeout: 30
+  login:
+    username: user@user.com
+    password: user123
 
 logging:
   level: INFO  # DEBUG, INFO, WARNING, ERROR, CRITICAL

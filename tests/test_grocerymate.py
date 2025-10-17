@@ -1,65 +1,80 @@
 """
-GroceryMate Test Suite.
+GroceryMate Functional Test Suite.
 
-This test demonstrates the framework usage with the GroceryMate application.
-HTML snapshots will be automatically saved for Claude Code to analyze.
+This suite contains functional tests that verify GroceryMate application behavior.
+These tests use the page objects built from HTML snapshots.
 """
 import pytest
 from pages.grocerymate_home_page import GroceryMateHomePage
 
 
+@pytest.mark.functional
 @pytest.mark.ui
-class TestGroceryMate:
-    """Test suite for GroceryMate application."""
-
-    def test_open_grocerymate_home_page(self, driver):
-        """
-        Test opening the GroceryMate home page.
-
-        This test will:
-        1. Create a GroceryMateHomePage object
-        2. Navigate to the GroceryMate home page
-        3. Automatically save HTML snapshot to page_snapshots/GroceryMateHomePage.html
-
-        After running this test, you can ask Claude Code to:
-        - Read the HTML snapshot
-        - Identify elements on the page
-        - Suggest accurate locators
-        - Help create additional page methods
-
-        Args:
-            driver: WebDriver fixture from conftest.py
-        """
-        # Create page object
-        home_page = GroceryMateHomePage(driver)
-
-        # Open the GroceryMate home page
-        # HTML snapshot will be automatically saved
-        home_page.open_home_page()
-
-        # Basic assertion to verify page loaded
-        assert driver.current_url is not None
-        print(f"\nNavigated to: {driver.current_url}")
-        print("HTML snapshot saved to: page_snapshots/GroceryMateHomePage.html")
-        print("You can now ask Claude Code to analyze the snapshot and suggest locators!")
+class TestGroceryMateHomePage:
+    """Functional tests for GroceryMate home page."""
 
     @pytest.mark.smoke
-    def test_grocerymate_page_title(self, driver_with_screenshots):
+    def test_home_page_loads(self, driver):
         """
-        Test to verify the GroceryMate page title.
+        Test that the GroceryMate home page loads successfully.
 
-        This test uses driver_with_screenshots fixture to automatically
-        capture screenshots on failure.
-
-        Args:
-            driver_with_screenshots: WebDriver fixture that captures screenshots on failure
+        Verifies:
+        - Page URL is correct
+        - Page title is not empty
         """
-        home_page = GroceryMateHomePage(driver_with_screenshots)
+        home_page = GroceryMateHomePage(driver)
         home_page.open_home_page()
 
-        # Get the page title
-        page_title = home_page.title
-        print(f"\nPage title: {page_title}")
+        assert "grocerymate.masterschool.com" in driver.current_url
+        assert home_page.title, "Page title should not be empty"
+        print(f"\n✓ Home page loaded: {driver.current_url}")
 
-        # Assert that the title is not empty
-        assert page_title, "Page title should not be empty"
+    @pytest.mark.smoke
+    def test_navigation_menu_links(self, driver):
+        """
+        Test that navigation menu links are present and clickable.
+
+        Verifies all main navigation items exist.
+        """
+        home_page = GroceryMateHomePage(driver)
+        home_page.open_home_page()
+
+        # Test that we can interact with navigation elements
+        # (not clicking to avoid navigation, just verifying presence)
+        assert home_page.find_element(home_page.NAV_HOME_LINK)
+        assert home_page.find_element(home_page.NAV_SHOP_LINK)
+        assert home_page.find_element(home_page.NAV_FAVORITES_LINK)
+        assert home_page.find_element(home_page.NAV_CONTACT_LINK)
+        print("\n✓ All navigation menu links are present")
+
+    def test_search_functionality_exists(self, driver):
+        """
+        Test that search functionality is present on the page.
+
+        Verifies:
+        - Search input field exists
+        - Search icon exists
+        """
+        home_page = GroceryMateHomePage(driver)
+        home_page.open_home_page()
+
+        assert home_page.find_element(home_page.SEARCH_INPUT)
+        assert home_page.find_element(home_page.SEARCH_ICON)
+        print("\n✓ Search functionality is present")
+
+    def test_header_icons_present(self, driver):
+        """
+        Test that all header icons are present.
+
+        Verifies:
+        - User account icon
+        - Favorites icon
+        - Shopping cart icon
+        """
+        home_page = GroceryMateHomePage(driver)
+        home_page.open_home_page()
+
+        assert home_page.find_element(home_page.USER_ACCOUNT_ICON)
+        assert home_page.find_element(home_page.FAVORITES_ICON)
+        assert home_page.find_element(home_page.SHOPPING_CART_ICON)
+        print("\n✓ All header icons are present")

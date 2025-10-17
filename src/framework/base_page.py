@@ -18,8 +18,10 @@ class BasePage:
     """
     Base class for all Page Objects.
 
-    Automatically captures and stores HTML snapshots when pages are accessed,
-    allowing Claude Code to analyze page structure and suggest accurate locators.
+    Provides common page interaction methods and manual HTML snapshot capability.
+    HTML snapshots can be captured on-demand for Claude Code analysis using the
+    save_html_snapshot() method. History is maintained with configurable retention
+    (default: 2 versions) to avoid excessive storage overhead.
     """
 
     def __init__(self, driver: WebDriver):
@@ -35,19 +37,18 @@ class BasePage:
             config.get('selenium.page_load_timeout', 30)
         )
 
-        # Automatically save HTML snapshot when page is initialized
-        if config.get('selenium.save_html_snapshots', True):
-            self._save_html_snapshot()
-
-    def _save_html_snapshot(self):
+    def save_html_snapshot(self, keep_history: int = 2):
         """
-        Save the current page HTML to a snapshot file.
+        Manually save the current page HTML to a snapshot file.
         This allows Claude Code to read the HTML and identify accurate locators.
+
+        Args:
+            keep_history: Number of historical versions to keep (default: 2)
         """
         snapshot_dir = self._get_snapshot_directory()
         os.makedirs(snapshot_dir, exist_ok=True)
 
-        # Create filename based on page class name and timestamp
+        # Create filename based on page class name
         page_name = self.__class__.__name__
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"{page_name}.html"
@@ -56,18 +57,48 @@ class BasePage:
         # Save the page source
         try:
             html_content = self.driver.page_source
+
+            # Save current version
             with open(filepath, 'w', encoding='utf-8') as f:
                 f.write(html_content)
 
-            # Also save a timestamped version for history
+            # Save timestamped version for history
+            history_dir = snapshot_dir / "history"
+            os.makedirs(history_dir, exist_ok=True)
             history_filename = f"{page_name}_{timestamp}.html"
-            history_filepath = snapshot_dir / "history" / history_filename
-            os.makedirs(history_filepath.parent, exist_ok=True)
+            history_filepath = history_dir / history_filename
             with open(history_filepath, 'w', encoding='utf-8') as f:
                 f.write(html_content)
 
+            # Clean up old history files, keeping only the most recent ones
+            self._cleanup_history(page_name, history_dir, keep_history)
+
         except Exception as e:
             print(f"Warning: Could not save HTML snapshot: {e}")
+
+    def _cleanup_history(self, page_name: str, history_dir: Path, keep_count: int):
+        """
+        Remove old historical snapshots, keeping only the most recent versions.
+
+        Args:
+            page_name: Name of the page class
+            history_dir: Directory containing historical snapshots
+            keep_count: Number of recent files to keep
+        """
+        try:
+            # Find all history files for this page
+            history_files = sorted(
+                history_dir.glob(f"{page_name}_*.html"),
+                key=lambda p: p.stat().st_mtime,
+                reverse=True
+            )
+
+            # Delete files beyond the keep_count
+            for old_file in history_files[keep_count:]:
+                old_file.unlink()
+
+        except Exception as e:
+            print(f"Warning: Could not cleanup history files: {e}")
 
     def _get_snapshot_directory(self) -> Path:
         """Get the directory for storing HTML snapshots."""
@@ -77,7 +108,7 @@ class BasePage:
 
     def open(self, url: str = None):
         """
-        Open a URL and save HTML snapshot.
+        Open a URL.
 
         Args:
             url: URL to open. If None, uses base_url from config
@@ -86,10 +117,6 @@ class BasePage:
             url = config.get('test_data.base_url')
 
         self.driver.get(url)
-
-        # Save snapshot after page loads
-        if config.get('selenium.save_html_snapshots', True):
-            self._save_html_snapshot()
 
     def find_element(self, locator: Tuple[By, str]) -> WebElement:
         """
@@ -215,10 +242,8 @@ class BasePage:
         return project_root / screenshot_dir
 
     def refresh_page(self):
-        """Refresh the current page and update HTML snapshot."""
+        """Refresh the current page."""
         self.driver.refresh()
-        if config.get('selenium.save_html_snapshots', True):
-            self._save_html_snapshot()
 
     @property
     def current_url(self) -> str:

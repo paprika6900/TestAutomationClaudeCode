@@ -24,9 +24,9 @@ class GroceryMateHomePage(BasePage):
     CONTACT_PHONE = (By.CSS_SELECTOR, ".contact span")
 
     # Header - User Icons
-    USER_ACCOUNT_ICON = (By.CSS_SELECTOR, ".headerIcon svg[viewBox='0 0 24 24']")
-    FAVORITES_ICON = (By.CSS_SELECTOR, ".headerIcon svg[viewBox='0 0 16 16']:nth-of-type(2)")
-    SHOPPING_CART_ICON = (By.CSS_SELECTOR, ".headerIcon svg[viewBox='0 0 16 16']:last-of-type")
+    USER_ACCOUNT_ICON = (By.CSS_SELECTOR, ".social-icon-cont .headerIcon:nth-child(1) svg")
+    FAVORITES_ICON = (By.CSS_SELECTOR, ".social-icon-cont .headerIcon:nth-child(2) svg")
+    SHOPPING_CART_ICON = (By.CSS_SELECTOR, ".social-icon-cont .headerIcon:nth-child(3) svg")
 
     # Navigation Menu
     NAV_HOME_LINK = (By.CSS_SELECTOR, ".anim-nav a[href='/']")
