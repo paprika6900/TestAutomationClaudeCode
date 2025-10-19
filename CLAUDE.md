@@ -1,389 +1,99 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides workflow and process guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project Overview
+**IMPORTANT**: For project documentation, architecture, and usage instructions, see `README.md`. For current tasks and notes, see `NOTEPAD.md`.
 
-TestAutomationClaudeCode - A Python-based Selenium test automation framework using pytest and the Page Object Model pattern. Designed specifically for use with Claude Code, featuring automatic HTML snapshot capture to help Claude identify accurate locators.
+## Table of Contents
 
-## Project Structure
+- [Note-Taking Process](#note-taking-process)
+- [Context Window Management](#context-window-management)
+- [Git Workflow](#git-workflow)
+- [Logging Standards](#logging-standards)
+- [Code Quality Standards](#code-quality-standards)
 
+## Note-Taking Process
+
+**CRITICAL**: Claude Code MUST use `NOTEPAD.md` to track all tasks, notes, and session information.
+
+### When to Update NOTEPAD.md
+
+Update `NOTEPAD.md` at these key moments:
+
+1. **At the start of each new session**:
+   - Update "Current Session Notes" with date and current branch
+   - Review and update "Active Tasks" section
+   - Clear out completed tasks from previous sessions
+
+2. **When receiving new tasks from the user**:
+   - Add tasks to "Active Tasks" or "Pending Tasks"
+   - Use checkbox format: `- [ ] Task description`
+   - Mark completed with: `- [x] Task description`
+
+3. **During work**:
+   - Update task status as you progress
+   - Add important notes, decisions, or discoveries to "Important Notes"
+   - Document any issues encountered
+
+4. **When completing work**:
+   - Mark tasks as complete
+   - Move relevant information to "Session History"
+   - Update "Known Issues" if applicable
+
+5. **When blocked or have questions**:
+   - Add to "Questions for User" section
+   - Document blocking issues in "Known Issues"
+
+### NOTEPAD.md Structure
+
+The file should maintain these sections:
+
+- **Current Session Notes**: Date, branch, active work
+- **Active Tasks**: Tasks currently in progress (use TodoWrite tool in parallel)
+- **Pending Tasks**: Tasks queued for future work
+- **Future Tasks**: Long-term improvements and ideas
+- **Important Notes**: Key decisions, discoveries, configuration details
+- **Session History**: Summary of completed sessions and PRs
+- **Known Issues**: Open and resolved issues
+- **Questions for User**: Items requiring user input
+- **Useful Commands**: Frequently used commands for this project
+- **Code Review Checklist**: Standard checklist for PRs
+
+### Integration with TodoWrite Tool
+
+- **TodoWrite tool**: For immediate, current task tracking (short-term memory)
+- **NOTEPAD.md**: For session notes, context, and cross-session tracking (long-term memory)
+
+Both should be used together:
 ```
-TestAutomationClaudeCode/
-├── src/                           # Source code directory
-│   ├── framework/                 # Test framework components
-│   │   ├── __init__.py
-│   │   ├── base_page.py          # Base Page Object Model class with HTML snapshot capability
-│   │   ├── config_manager.py     # Configuration management
-│   │   └── driver_manager.py     # WebDriver factory and management
-│   └── pages/                     # Page Object Model classes
-│       ├── __init__.py
-│       └── grocerymate_home_page.py  # GroceryMate home page object
-├── tests/                         # Test directory
-│   ├── __init__.py
-│   ├── conftest.py               # Pytest fixtures (driver setup)
-│   └── test_grocerymate.py       # GroceryMate test suite
-├── page_snapshots/                # HTML snapshots (auto-generated, gitignored)
-│   ├── GroceryMateHomePage.html  # Latest snapshot of each page
-│   └── history/                  # Historical snapshots
-├── screenshots/                   # Test screenshots (auto-generated, gitignored)
-│   └── failures/                 # Screenshots on test failure
-├── config.yaml                    # Framework configuration
-├── pytest.ini                     # Pytest configuration
-├── requirements.txt               # Python dependencies (for pip reference)
-└── .gitignore                     # Git ignore patterns
-```
+User: "Add feature X, Y, and Z"
 
-## Development Setup
-
-Install the required Python packages using apt:
-
-```bash
-sudo apt update
-sudo apt install -y python3-pytest python3-selenium python3-yaml
-```
-
-**Install ChromeDriver** (required for Chrome browser automation):
-
-```bash
-# Install Chrome browser (if not already installed)
-wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-sudo apt install ./google-chrome-stable_current_amd64.deb
-
-# Install chromedriver
-sudo apt install chromium-chromedriver
-```
-
-**For Firefox** (optional, if you want to use Firefox instead):
-```bash
-sudo apt install firefox firefox-geckodriver
-```
-
-**IDE Setup**: Make sure your IDE Python interpreter is set to `/usr/bin/python3` to use the system-installed packages.
-
-## Running Tests
-
-The project uses pytest with configuration in `pytest.ini`. The configuration automatically adds the `src/` directory to the Python path.
-
-### Selenium UI Tests
-
-Run all selenium UI tests:
-```bash
-pytest -m ui
-```
-
-Run GroceryMate tests:
-```bash
-pytest tests/test_grocerymate.py
-```
-
-Run a specific test:
-```bash
-pytest tests/test_grocerymate.py::TestGroceryMate::test_open_grocerymate_home_page
+Claude:
+1. Uses TodoWrite to create immediate task list
+2. Updates NOTEPAD.md "Active Tasks" with the same tasks
+3. Works on tasks, updating both TodoWrite and NOTEPAD.md as progress is made
+4. Marks tasks complete in both places
+5. Moves completed work to "Session History" in NOTEPAD.md
 ```
 
-### All Tests
-
-Run all tests:
-```bash
-pytest
-```
-
-Run with verbose output:
-```bash
-pytest -v
-```
-
-### Test Markers
-
-The framework includes custom markers for organizing tests:
-- `@pytest.mark.ui` - UI tests using Selenium
-- `@pytest.mark.smoke` - Smoke tests
-- `@pytest.mark.regression` - Regression tests
-
-Run tests by marker:
-```bash
-pytest -m smoke
-pytest -m "ui and smoke"
-```
-
-## Architecture
-
-The framework follows Python best practices with a src-layout and Page Object Model pattern:
-
-### Framework Components
-
-- **src/framework/base_page.py** - Base Page Object class
-  - Provides common page interaction methods (click, enter_text, wait_for_element, etc.)
-  - **Automatically saves HTML snapshots** when pages are accessed
-  - Snapshots saved to `page_snapshots/PageName.html` for Claude Code to analyze
-  - Historical snapshots kept in `page_snapshots/history/` with timestamps
-  - Built-in screenshot capture functionality
-
-- **src/framework/driver_manager.py** - WebDriver factory
-  - Creates and configures browser instances (Chrome, Firefox)
-  - Uses system-installed chromedriver/geckodriver
-  - Applies configuration from config.yaml (headless mode, window size, timeouts)
-
-- **src/framework/config_manager.py** - Configuration management
-  - Singleton pattern for accessing config.yaml settings
-  - Provides dot-notation access (e.g., `config.get('browser.name')`)
-
-### Page Objects
-
-- **src/pages/** - Page Object Model classes
-  - Each page inherits from `BasePage`
-  - Locators defined as class constants using `(By.LOCATOR_TYPE, "locator_string")` tuples
-  - Page-specific methods encapsulate user actions
-  - Example: `src/pages/grocerymate_home_page.py`
-
-### Test Organization
-
-- **tests/conftest.py** - Pytest fixtures and configuration
-  - `driver` fixture - Creates WebDriver for each test (function scope)
-  - `driver_with_screenshots` fixture - Same as driver but captures screenshots on failure
-  - `driver_session` fixture - Single driver for entire test session (faster, less isolated)
-  - Custom test markers: `@pytest.mark.ui`, `@pytest.mark.smoke`, `@pytest.mark.regression`
-
-- **tests/** - Test files
-  - Organized by feature or page
-  - Use fixtures from conftest.py
-  - Follow pytest naming conventions (`test_*.py`)
-
-### Configuration
-
-- **config.yaml** - Central configuration file
-  - Browser settings (name, headless mode, window size, timeouts)
-  - Selenium settings (screenshot paths, HTML snapshot paths)
-  - Test data (base URLs, timeouts)
-  - Logging configuration
-
-## Working with Claude Code and HTML Snapshots
-
-### How HTML Snapshots Work
-
-This framework is specifically designed to work seamlessly with Claude Code:
-
-1. **Automatic Snapshot Capture**: When a page object is instantiated or `open()` is called, the HTML source is automatically saved
-2. **Snapshot Location**: `page_snapshots/PageName.html` (e.g., `page_snapshots/GroceryMateHomePage.html`)
-3. **Historical Snapshots**: Each snapshot is also saved with a timestamp in `page_snapshots/history/`
-
-### Complete Workflow for Building Page Objects from HTML
-
-This is the recommended workflow for writing automated tests with this framework:
-
-#### Step 1: Create a Basic Test to Navigate to the Page
-
-First, create a simple test that navigates to the page you want to test. Even if you don't have locators yet, this test will capture the HTML snapshot.
-
-**Example**: Create or update `tests/test_grocerymate.py`:
-```python
-import pytest
-from pages.grocerymate_home_page import GroceryMateHomePage
-
-@pytest.mark.ui
-def test_open_grocerymate_home_page(driver):
-    """Navigate to GroceryMate home page and capture HTML snapshot."""
-    home_page = GroceryMateHomePage(driver)
-    home_page.open_home_page()
-    # HTML snapshot automatically saved to page_snapshots/GroceryMateHomePage.html
-    assert driver.current_url is not None
-```
-
-#### Step 2: Run the Test to Capture HTML Snapshot
-
-Run the test to navigate to the page and automatically save the HTML:
-
-```bash
-pytest tests/test_grocerymate.py::test_open_grocerymate_home_page -v
-```
-
-The HTML snapshot will be saved to:
-- `page_snapshots/GroceryMateHomePage.html` (latest snapshot)
-- `page_snapshots/history/GroceryMateHomePage_YYYYMMDD_HHMMSS.html` (historical copy)
-
-#### Step 3: Ask Claude Code to Analyze HTML and Build Page Object
-
-Now ask Claude Code to read the HTML snapshot and create a complete page object:
-
-**Example prompt**:
-```
-"Read page_snapshots/GroceryMateHomePage.html and build a complete Page Object Model
-for the GroceryMate home page. Include locators for all interactive elements like
-navigation menu, search bar, user icons, and any call-to-action buttons."
-```
-
-Claude Code will:
-1. Read the HTML snapshot
-2. Identify all major interactive elements (buttons, links, inputs, etc.)
-3. Create accurate CSS selectors or other locator strategies
-4. Generate a complete page object class with:
-   - Well-organized locator constants grouped by section
-   - Descriptive method names for each interaction
-   - Proper documentation
-
-#### Step 4: Create Additional Test Methods
-
-Once the page object is complete with locators, create additional test methods to exercise the functionality:
-
-```python
-@pytest.mark.smoke
-def test_search_functionality(driver):
-    """Test the search functionality."""
-    home_page = GroceryMateHomePage(driver)
-    home_page.open_home_page()
-    home_page.search_for_product("tomatoes")
-    # Add assertions here
-
-@pytest.mark.ui
-def test_navigation_to_shop(driver):
-    """Test navigation to Shop page."""
-    home_page = GroceryMateHomePage(driver)
-    home_page.open_home_page()
-    home_page.click_shop_nav()
-    # Verify navigation occurred
-```
-
-#### Step 5: Navigate to Sub-Pages and Repeat
-
-When you need to test a sub-page (like a product details page), repeat the workflow:
-
-1. Create a test that navigates to the sub-page
-2. Run the test to capture HTML (a new snapshot will be created for the new page object)
-3. Ask Claude Code to analyze the new snapshot
-4. Claude Code builds the new page object
-
-**Example**: Testing the Shop page:
-```python
-# In tests/test_grocerymate_shop.py
-@pytest.mark.ui
-def test_open_shop_page(driver):
-    """Navigate to Shop page and capture HTML."""
-    home_page = GroceryMateHomePage(driver)
-    home_page.open_home_page()
-    home_page.click_shop_nav()
-
-    # Create shop page object
-    shop_page = GroceryMateShopPage(driver)
-    # HTML snapshot saved to page_snapshots/GroceryMateShopPage.html
-```
-
-Then ask Claude Code:
-```
-"Read page_snapshots/GroceryMateShopPage.html and build a complete Page Object Model
-for the shop page with all product filtering, sorting, and cart functionality."
-```
-
-### Real Example: GroceryMateHomePage
-
-The `src/pages/grocerymate_home_page.py` file was created using exactly this workflow:
-
-1. **Test Created**: `test_open_grocerymate_home_page` in `tests/test_grocerymate.py`
-2. **Test Executed**: HTML snapshot captured to `page_snapshots/GroceryMateHomePage.html`
-3. **Claude Code Analyzed**: Read the 134KB HTML file and identified all key elements
-4. **Page Object Built**: Complete page object created with:
-   - 12 locators organized by section (header, navigation, buttons)
-   - 14 methods covering all interactions (search, navigation, clicks)
-   - Proper documentation and naming conventions
-
-**Result**: A production-ready page object in `src/pages/grocerymate_home_page.py:20-135` with locators for:
-- Search input and icon
-- Navigation menu (Home, Shop, Favorites, Contact)
-- User account, favorites, and cart icons
-- Three "Shop Now" buttons in different page sections
-- Contact phone number
-
-### Best Practices
-
-1. **Start Simple**: Create basic test → capture HTML → build page object → add complex tests
-2. **One Page at a Time**: Focus on one page object before moving to the next
-3. **Update Snapshots**: Re-run tests after UI changes to update HTML snapshots
-4. **Ask Specific Questions**: Guide Claude Code to specific sections if the HTML is very large
-   - Example: "Focus on the navigation menu in GroceryMateHomePage.html"
-5. **Verify Locators**: Run tests after Claude Code builds the page object to verify locators work
-6. **Organize by Feature**: Group related tests together (e.g., all shop page tests in `test_grocerymate_shop.py`)
-
-### Troubleshooting Large HTML Files
-
-If an HTML snapshot is too large for Claude Code to read at once:
-
-1. **Ask Claude Code to use grep** to extract specific sections:
-   ```
-   "Use grep to find all input and button elements in GroceryMateHomePage.html"
-   ```
-
-2. **Focus on specific features**:
-   ```
-   "Read the navigation section of GroceryMateHomePage.html and create locators for menu items"
-   ```
-
-3. **Analyze in chunks**: Ask for header elements first, then content, then footer
-
-### Benefits of This Approach
-
-- **Accurate Locators**: Claude Code analyzes actual HTML structure, not assumptions
-- **Fast Development**: No manual element inspection in browser DevTools
-- **Up-to-Date**: Snapshots refreshed automatically each test run
-- **Historical Tracking**: Compare snapshots over time to detect UI changes
-- **Better Maintainability**: Claude Code suggests stable, semantic locators (CSS preferred over XPath)
-- **Complete Coverage**: Claude Code identifies ALL interactive elements, not just the obvious ones
-- **Consistent Patterns**: Page objects follow consistent naming and organization
-
-## Git Workflow
-
-**IMPORTANT**: When requested to commit and push changes, always follow this workflow:
-
-1. **Create a new feature branch** with a clear, descriptive name
-   ```bash
-   git checkout -b feature/descriptive-name
-   ```
-
-2. **Stage and commit changes** with a clear commit message explaining all changes
-   ```bash
-   git add .
-   git commit -m "Clear description of changes"
-   ```
-
-3. **Push the feature branch** to remote
-   ```bash
-   git push -u origin feature/descriptive-name
-   ```
-
-4. **Create a Pull Request targeting main/master branch**
-   - **CRITICAL**: ALWAYS target main/master branch (NOT feature branches)
-   - Use `gh pr create --base main` command
-   - Include summary of changes and test plan
-   - Example: `gh pr create --base main --title "Add feature X" --body "Description"`
-
-5. **Wait for code review** - Do NOT merge or checkout master until the user completes their review and gives approval
-
-### Why Always Target Main/Master
-
-- This is a **solo developer project** - no need for intermediate feature branches
-- Direct PRs to main simplify the workflow
-- Easier to track what's in production (main branch)
-- Reduces unnecessary branch management overhead
-
-## Claude Code Workflow Requirements
-
-### Context Window Management
+## Context Window Management
 
 **CRITICAL**: Before starting ANY new task, Claude Code MUST check the context window usage and manage it proactively.
 
-#### When to Check Context Window
+### When to Check Context Window
 
 - **At the start of EVERY new user prompt**: Before beginning work on any task
 - **When approaching 100,000 tokens**: Proactively warn the user
 - **Before reading large files**: Especially HTML snapshots or log files
 
-#### How to Check Context Window
+### How to Check Context Window
 
 Monitor the token usage displayed in system warnings:
 ```
 <system_warning>Token usage: 85000/200000; 115000 remaining</system_warning>
 ```
 
-#### Action Thresholds
+### Action Thresholds
 
 | Token Usage | Remaining | Action Required |
 |------------|-----------|-----------------|
@@ -392,7 +102,7 @@ Monitor the token usage displayed in system warnings:
 | 150,000-180,000 | 20,000-50,000 | **Strongly recommend** user runs `/compact` command |
 | > 180,000  | < 20,000  | **STOP and request** user runs `/compact` before continuing |
 
-#### Compact Command
+### Compact Command
 
 When context is too full, ask the user to run:
 ```
@@ -404,7 +114,7 @@ This will:
 - Reset the context window
 - Allow Claude Code to continue with a fresh context
 
-#### Example Workflow
+### Example Workflow
 
 **Good**:
 ```
@@ -427,11 +137,143 @@ Claude: [Starts working without checking context]
 [Cannot complete the work]
 ```
 
-### Logging Standards
+## Git Workflow
 
-All framework components, page objects, and tests MUST implement comprehensive logging following these standards:
+**IMPORTANT**: When requested to commit and push changes, always follow this workflow.
 
-#### Logging Levels
+### Standard Feature Development Workflow
+
+#### Before Starting New Work
+
+**CRITICAL**: ALWAYS pull latest changes from main before creating a new feature branch.
+
+```bash
+# Ensure you're on main branch
+git checkout main
+
+# Pull latest changes from remote
+git pull origin main
+```
+
+**NEVER** start a new feature without pulling the latest code from main first.
+
+#### Feature Development Steps
+
+1. **Create a new feature branch** with a clear, descriptive name
+   ```bash
+   # Already on main with latest code
+   git checkout -b feature/descriptive-name
+   ```
+
+   Or for bug fixes:
+   ```bash
+   git checkout -b fix/descriptive-name
+   ```
+
+2. **Stage and commit changes** with a clear commit message explaining all changes
+   ```bash
+   git add .
+   git commit -m "Clear description of changes"
+   ```
+
+   For multi-line commit messages with details:
+   ```bash
+   git commit -m "$(cat <<'EOF'
+   Summary line describing the change
+
+   Detailed explanation of what changed and why.
+
+   Changes:
+   - Item 1
+   - Item 2
+
+   🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+   Co-Authored-By: Claude <noreply@anthropic.com>
+   EOF
+   )"
+   ```
+
+3. **Push the feature branch** to remote
+   ```bash
+   git push -u origin feature/descriptive-name
+   ```
+
+4. **Create a Pull Request targeting main/master branch**
+   - **CRITICAL**: ALWAYS target main/master branch (NOT feature branches)
+   - Use `gh pr create --base main` command
+   - Include summary of changes and test plan
+
+   Example:
+   ```bash
+   gh pr create --base main --title "Add feature X" --body "$(cat <<'EOF'
+   ## Summary
+   Description of changes
+
+   ## Changes
+   - Item 1
+   - Item 2
+
+   ## Test Plan
+   - [ ] Test 1
+   - [ ] Test 2
+
+   🤖 Generated with [Claude Code](https://claude.com/claude-code)
+   EOF
+   )"
+   ```
+
+5. **STOP and wait for user confirmation that PR is merged**
+   - **CRITICAL**: After creating PR, STOP all work on this branch
+   - **NEVER** continue working on the feature branch after creating the PR
+   - Inform the user that the PR is ready for review
+   - Wait for explicit user confirmation that they have reviewed and merged the PR
+   - Do NOT assume the PR is merged - always ask or verify
+
+6. **After PR is merged - Switch back to main and pull**
+   - Once user confirms PR is merged:
+   ```bash
+   # Switch to main branch
+   git checkout main
+
+   # Pull the newly merged changes
+   git pull origin main
+   ```
+
+7. **Ready for next task**
+   - Now you're on main with all latest changes
+   - Ready to create a new feature branch for the next task
+   - Repeat from step 1 for the next feature
+
+### Why Always Target Main/Master
+
+- This is a **solo developer project** - no need for intermediate feature branches
+- Direct PRs to main simplify the workflow
+- Easier to track what's in production (main branch)
+- Reduces unnecessary branch management overhead
+
+### Creating Pull Requests
+
+When creating PRs, include:
+- **Title**: Clear, concise description of the change
+- **Summary**: What changed and why
+- **Changes**: Bullet list of specific changes
+- **Test Plan**: How to verify the changes work
+- **Claude Code attribution**: Footer with generation note
+
+### Git Safety
+
+- **NEVER** update git config
+- **NEVER** run destructive/irreversible git commands (like `push --force`, `hard reset`) unless explicitly requested
+- **NEVER** skip hooks (`--no-verify`, `--no-gpg-sign`) unless explicitly requested
+- **NEVER** force push to main/master - warn the user if they request it
+- **Avoid** `git commit --amend` unless explicitly requested or fixing pre-commit hook issues
+
+## Logging Standards
+
+All framework components, page objects, and tests MUST implement comprehensive logging following these standards.
+
+### Logging Levels
 
 Use appropriate logging levels for different types of messages:
 
@@ -443,7 +285,7 @@ Use appropriate logging levels for different types of messages:
 | **ERROR** | Error messages for failures that don't stop execution | Element timeout, assertion failure, screenshot save failure |
 | **CRITICAL** | Critical errors that may cause program termination | Driver creation failure, config file missing |
 
-#### Framework Component Logging
+### Framework Component Logging
 
 Every framework component in `src/framework/` MUST include logging:
 
@@ -473,7 +315,7 @@ logger.error(f"Element not clickable within timeout: {locator_str} on page {curr
 logger.error(f"Failed to save HTML snapshot for {page_name}: {e}", exc_info=True)
 ```
 
-#### Page Object Logging
+### Page Object Logging
 
 Page objects in `src/pages/` SHOULD include logging for:
 
@@ -501,7 +343,7 @@ class GroceryMateLoginPage(BasePage):
             raise
 ```
 
-#### Test Logging
+### Test Logging
 
 Tests SHOULD log:
 
@@ -534,7 +376,7 @@ def test_login_with_valid_credentials(driver):
     assert passed, f"Login failed - still on auth page: {current_url}"
 ```
 
-#### Assertion Messages
+### Assertion Messages
 
 All assertions MUST include clear, descriptive messages that provide context:
 
@@ -566,7 +408,7 @@ assert element_visible, (
 )
 ```
 
-#### Sensitive Data Masking
+### Sensitive Data Masking
 
 **ALWAYS** mask sensitive data in logs:
 
@@ -578,7 +420,7 @@ display_text = "****" if any(word in locator[1].lower()
 logger.debug(f"Entering text '{display_text}' into element: {locator_str}")
 ```
 
-#### Exception Logging
+### Exception Logging
 
 When logging exceptions, ALWAYS include the stack trace:
 
@@ -590,7 +432,7 @@ except Exception as e:
     raise
 ```
 
-#### Log File Organization
+### Log File Organization
 
 Logs are organized as follows:
 
@@ -624,41 +466,64 @@ logger = get_test_logger(__name__)
 9. **❌ DON'T**: Write assertions without descriptive messages
 10. **❌ DON'T**: Swallow exceptions without logging
 
-### Framework Extensibility
+## Code Quality Standards
 
-This framework is designed to be reusable for **any website**, not just GroceryMate:
+### Page Object Model (POM) Standards
 
-#### GroceryMate as an Example
+When creating or modifying page objects:
 
-- `src/pages/grocerymate_*.py` - Example page objects for GroceryMate
-- `tests/test_grocerymate*.py` - Example tests for GroceryMate
+1. **Inherit from BasePage**: All page objects must extend `BasePage`
+2. **Locator Constants**: Define all locators as class constants at the top
+   ```python
+   ELEMENT_NAME = (By.CSS_SELECTOR, "css.selector")
+   ```
+3. **Semantic Naming**: Use descriptive names that reflect the element's purpose
+4. **Group Locators**: Organize locators by page section with comments
+5. **Method Names**: Use clear, action-based method names (`click_submit_button`, not `click_button1`)
+6. **Documentation**: Include docstrings for all methods
+7. **Logging**: Add appropriate logging to all interactions
 
-#### Adding New Websites
+### Locator Strategy
 
-To test a different website:
+Prefer locators in this order:
+1. **CSS Selectors** (most stable, readable)
+2. **IDs** (if unique and semantic)
+3. **Data attributes** (if available, e.g., `data-testid`)
+4. **XPath** (last resort, harder to maintain)
 
-1. **Update config.yaml** with the new base URL
-2. **Create new page objects** in `src/pages/your_site_*.py`
-3. **Create new tests** in `tests/test_your_site*.py`
-4. **Follow the HTML snapshot workflow** to build page objects
-5. **Use the same logging standards** as the example files
+### Test Organization
 
-The framework components (`src/framework/`) remain unchanged and work with any website.
+1. **One test class per page**: Group related tests in classes named `TestPageName`
+2. **Use markers**: Apply appropriate markers (`@pytest.mark.ui`, `@pytest.mark.smoke`, etc.)
+3. **Descriptive test names**: `test_login_with_valid_credentials` not `test_1`
+4. **Arrange-Act-Assert**: Structure tests clearly
+5. **Independent tests**: Each test should be able to run independently
+6. **Use fixtures**: Leverage pytest fixtures from `conftest.py`
 
-**Example structure for testing multiple sites**:
-```
-src/pages/
-├── grocerymate_home_page.py    # Example: GroceryMate
-├── grocerymate_login_page.py   # Example: GroceryMate
-├── amazon_home_page.py          # Your site: Amazon
-├── amazon_product_page.py       # Your site: Amazon
-└── github_repo_page.py          # Your site: GitHub
+### Configuration
 
-tests/
-├── test_grocerymate.py          # Example tests
-├── test_grocerymate_login.py    # Example tests
-├── test_amazon.py               # Your tests
-└── test_github.py               # Your tests
-```
+- **Never hardcode**: Use `config.yaml` for all configurable values
+- **No secrets in code**: Credentials should be in `config.yaml` (gitignored in production)
+- **Environment-specific**: Support different configs for dev/test/prod
 
-Keep the GroceryMate files as examples and reference implementations.
+### Error Handling
+
+1. **Let exceptions bubble**: Don't catch and swallow exceptions unless you have a specific reason
+2. **Add context**: When catching exceptions, add context before re-raising
+3. **Log before raising**: Use `logger.error()` with `exc_info=True` before raising
+4. **Clear messages**: Assertion and exception messages should clearly state what went wrong
+
+## Summary
+
+- **README.md**: Project documentation (what, how, architecture)
+- **CLAUDE.md**: Process instructions (workflow, standards, how to work)
+- **NOTEPAD.md**: Task tracking and session notes (current state, todos, history)
+
+Claude Code should:
+1. **Check context window** before starting work
+2. **Update NOTEPAD.md** throughout the session
+3. **Follow Git workflow** for all changes
+4. **Apply logging standards** to all code
+5. **Follow POM standards** for page objects and tests
+6. **Create PRs to main** with clear descriptions
+7. **Wait for review** before merging
