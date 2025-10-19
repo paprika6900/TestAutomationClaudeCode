@@ -349,11 +349,20 @@ If an HTML snapshot is too large for Claude Code to read at once:
    git push -u origin feature/descriptive-name
    ```
 
-4. **Create a Merge Request (Pull Request)** to master branch
-   - Use `gh pr create` command
+4. **Create a Pull Request targeting main/master branch**
+   - **CRITICAL**: ALWAYS target main/master branch (NOT feature branches)
+   - Use `gh pr create --base main` command
    - Include summary of changes and test plan
+   - Example: `gh pr create --base main --title "Add feature X" --body "Description"`
 
 5. **Wait for code review** - Do NOT merge or checkout master until the user completes their review and gives approval
+
+### Why Always Target Main/Master
+
+- This is a **solo developer project** - no need for intermediate feature branches
+- Direct PRs to main simplify the workflow
+- Easier to track what's in production (main branch)
+- Reduces unnecessary branch management overhead
 
 ## Claude Code Workflow Requirements
 
