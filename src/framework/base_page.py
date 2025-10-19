@@ -3,6 +3,7 @@ Base Page Object Model class with HTML snapshot capability for Claude Code integ
 """
 import os
 import time
+import logging
 from pathlib import Path
 from datetime import datetime
 from typing import Tuple, List
@@ -10,8 +11,12 @@ from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from selenium.webdriver.common.by import By
 from framework.config_manager import config
+
+# Configure logger for this module
+logger = logging.getLogger(__name__)
 
 
 class BasePage:
@@ -32,10 +37,9 @@ class BasePage:
             driver: Selenium WebDriver instance
         """
         self.driver = driver
-        self.wait = WebDriverWait(
-            driver,
-            config.get('selenium.page_load_timeout', 30)
-        )
+        timeout = config.get('selenium.page_load_timeout', 30)
+        self.wait = WebDriverWait(driver, timeout)
+        logger.debug(f"Initialized {self.__class__.__name__} with timeout={timeout}s")
 
     def save_html_snapshot(self, keep_history: int = 2):
         """
@@ -45,11 +49,13 @@ class BasePage:
         Args:
             keep_history: Number of historical versions to keep (default: 2)
         """
+        page_name = self.__class__.__name__
+        logger.info(f"Saving HTML snapshot for {page_name}, keeping {keep_history} historical versions")
+
         snapshot_dir = self._get_snapshot_directory()
         os.makedirs(snapshot_dir, exist_ok=True)
 
         # Create filename based on page class name
-        page_name = self.__class__.__name__
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"{page_name}.html"
         filepath = snapshot_dir / filename
@@ -57,10 +63,12 @@ class BasePage:
         # Save the page source
         try:
             html_content = self.driver.page_source
+            content_size = len(html_content)
 
             # Save current version
             with open(filepath, 'w', encoding='utf-8') as f:
                 f.write(html_content)
+            logger.debug(f"Saved current snapshot: {filepath} ({content_size} bytes)")
 
             # Save timestamped version for history
             history_dir = snapshot_dir / "history"
@@ -69,12 +77,13 @@ class BasePage:
             history_filepath = history_dir / history_filename
             with open(history_filepath, 'w', encoding='utf-8') as f:
                 f.write(html_content)
+            logger.debug(f"Saved historical snapshot: {history_filepath}")
 
             # Clean up old history files, keeping only the most recent ones
             self._cleanup_history(page_name, history_dir, keep_history)
 
         except Exception as e:
-            print(f"Warning: Could not save HTML snapshot: {e}")
+            logger.error(f"Failed to save HTML snapshot for {page_name}: {e}", exc_info=True)
 
     def _cleanup_history(self, page_name: str, history_dir: Path, keep_count: int):
         """
@@ -94,11 +103,16 @@ class BasePage:
             )
 
             # Delete files beyond the keep_count
+            deleted_count = 0
             for old_file in history_files[keep_count:]:
                 old_file.unlink()
+                deleted_count += 1
+
+            if deleted_count > 0:
+                logger.debug(f"Cleaned up {deleted_count} old historical snapshots for {page_name}")
 
         except Exception as e:
-            print(f"Warning: Could not cleanup history files: {e}")
+            logger.warning(f"Could not cleanup history files for {page_name}: {e}")
 
     def _get_snapshot_directory(self) -> Path:
         """Get the directory for storing HTML snapshots."""
@@ -116,7 +130,13 @@ class BasePage:
         if url is None:
             url = config.get('test_data.base_url')
 
-        self.driver.get(url)
+        logger.info(f"{self.__class__.__name__}: Opening URL: {url}")
+        try:
+            self.driver.get(url)
+            logger.debug(f"Successfully loaded URL: {url}")
+        except Exception as e:
+            logger.error(f"Failed to open URL '{url}': {e}", exc_info=True)
+            raise
 
     def find_element(self, locator: Tuple[By, str]) -> WebElement:
         """
@@ -151,9 +171,24 @@ class BasePage:
 
         Args:
             locator: Tuple of (By, locator_string)
+
+        Raises:
+            TimeoutException: If element is not clickable within timeout period
         """
-        element = self.wait.until(EC.element_to_be_clickable(locator))
-        element.click()
+        locator_str = f"{locator[0]}='{locator[1]}'"
+        logger.debug(f"Attempting to click element: {locator_str}")
+
+        try:
+            element = self.wait.until(EC.element_to_be_clickable(locator))
+            element.click()
+            logger.debug(f"Successfully clicked element: {locator_str}")
+        except TimeoutException:
+            current_url = self.driver.current_url
+            logger.error(f"Element not clickable within timeout: {locator_str} on page {current_url}")
+            raise TimeoutException(
+                f"Element with locator {locator_str} was not clickable within timeout. "
+                f"Current URL: {current_url}"
+            )
 
     def enter_text(self, locator: Tuple[By, str], text: str):
         """
@@ -162,10 +197,27 @@ class BasePage:
         Args:
             locator: Tuple of (By, locator_string)
             text: Text to enter
+
+        Raises:
+            TimeoutException: If element is not visible within timeout period
         """
-        element = self.wait.until(EC.visibility_of_element_located(locator))
-        element.clear()
-        element.send_keys(text)
+        locator_str = f"{locator[0]}='{locator[1]}'"
+        # Mask sensitive data in logs (passwords, tokens, etc.)
+        display_text = "****" if any(word in locator[1].lower() for word in ['password', 'token', 'secret']) else text
+        logger.debug(f"Entering text '{display_text}' into element: {locator_str}")
+
+        try:
+            element = self.wait.until(EC.visibility_of_element_located(locator))
+            element.clear()
+            element.send_keys(text)
+            logger.debug(f"Successfully entered text into element: {locator_str}")
+        except TimeoutException:
+            current_url = self.driver.current_url
+            logger.error(f"Element not visible for text entry: {locator_str} on page {current_url}")
+            raise TimeoutException(
+                f"Element with locator {locator_str} was not visible for text entry within timeout. "
+                f"Current URL: {current_url}"
+            )
 
     def get_text(self, locator: Tuple[By, str]) -> str:
         """
@@ -176,9 +228,25 @@ class BasePage:
 
         Returns:
             Element text
+
+        Raises:
+            TimeoutException: If element is not visible within timeout period
         """
-        element = self.wait.until(EC.visibility_of_element_located(locator))
-        return element.text
+        locator_str = f"{locator[0]}='{locator[1]}'"
+        logger.debug(f"Getting text from element: {locator_str}")
+
+        try:
+            element = self.wait.until(EC.visibility_of_element_located(locator))
+            text = element.text
+            logger.debug(f"Retrieved text '{text}' from element: {locator_str}")
+            return text
+        except TimeoutException:
+            current_url = self.driver.current_url
+            logger.error(f"Element not visible for getting text: {locator_str} on page {current_url}")
+            raise TimeoutException(
+                f"Element with locator {locator_str} was not visible for getting text within timeout. "
+                f"Current URL: {current_url}"
+            )
 
     def is_element_visible(self, locator: Tuple[By, str], timeout: int = None) -> bool:
         """
@@ -191,14 +259,20 @@ class BasePage:
         Returns:
             True if element is visible, False otherwise
         """
+        locator_str = f"{locator[0]}='{locator[1]}'"
+        timeout_val = timeout or config.get('selenium.page_load_timeout', 30)
+        logger.debug(f"Checking if element is visible: {locator_str} (timeout={timeout_val}s)")
+
         try:
             if timeout:
                 wait = WebDriverWait(self.driver, timeout)
                 wait.until(EC.visibility_of_element_located(locator))
             else:
                 self.wait.until(EC.visibility_of_element_located(locator))
+            logger.debug(f"Element is visible: {locator_str}")
             return True
-        except:
+        except TimeoutException:
+            logger.debug(f"Element is not visible: {locator_str}")
             return False
 
     def wait_for_element(self, locator: Tuple[By, str], timeout: int = None) -> WebElement:
@@ -233,7 +307,11 @@ class BasePage:
             name = f"{page_name}_{timestamp}"
 
         filepath = screenshot_dir / f"{name}.png"
-        self.driver.save_screenshot(str(filepath))
+        try:
+            self.driver.save_screenshot(str(filepath))
+            logger.info(f"Screenshot saved: {filepath}")
+        except Exception as e:
+            logger.error(f"Failed to save screenshot '{name}': {e}", exc_info=True)
 
     def _get_screenshot_directory(self) -> Path:
         """Get the directory for storing screenshots."""
