@@ -7,6 +7,8 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.firefox.service import Service as FirefoxService
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.firefox import GeckoDriverManager
 from framework.config_manager import config
 
 logger = logging.getLogger(__name__)
@@ -51,8 +53,8 @@ class DriverManager:
         """
         Create and configure a Chrome WebDriver instance.
 
-        Uses system-installed chromedriver. Make sure chromedriver is installed:
-        sudo apt install chromium-chromedriver
+        Uses webdriver-manager to automatically download and manage ChromeDriver.
+        Works cross-platform (Windows, Linux, macOS).
         """
         headless = config.get('browser.headless', False)
         window_size = config.get('browser.window_size', '1920x1080')
@@ -76,8 +78,9 @@ class DriverManager:
         options.add_experimental_option('excludeSwitches', ['enable-logging'])
         options.add_experimental_option('useAutomationExtension', False)
 
-        # Use system chromedriver with explicit path
-        service = ChromeService('/usr/bin/chromedriver')
+        # Use webdriver-manager to automatically handle driver download/setup
+        logger.debug("Installing/updating ChromeDriver via webdriver-manager")
+        service = ChromeService(ChromeDriverManager().install())
         driver = webdriver.Chrome(service=service, options=options)
 
         # Set timeouts
@@ -91,8 +94,8 @@ class DriverManager:
         """
         Create and configure a Firefox WebDriver instance.
 
-        Uses system-installed geckodriver. Make sure geckodriver is installed:
-        sudo apt install firefox-geckodriver
+        Uses webdriver-manager to automatically download and manage GeckoDriver.
+        Works cross-platform (Windows, Linux, macOS).
         """
         options = FirefoxOptions()
 
@@ -106,12 +109,15 @@ class DriverManager:
         options.set_preference('browser.window.width', int(width))
         options.set_preference('browser.window.height', int(height))
 
-        # Use system geckodriver
-        driver = webdriver.Firefox(options=options)
+        # Use webdriver-manager to automatically handle driver download/setup
+        logger.debug("Installing/updating GeckoDriver via webdriver-manager")
+        service = FirefoxService(GeckoDriverManager().install())
+        driver = webdriver.Firefox(service=service, options=options)
 
         # Set timeouts
         DriverManager._set_timeouts(driver)
 
+        logger.debug("Firefox driver created successfully")
         return driver
 
     @staticmethod
