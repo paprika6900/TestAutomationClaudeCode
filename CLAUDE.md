@@ -354,3 +354,302 @@ If an HTML snapshot is too large for Claude Code to read at once:
    - Include summary of changes and test plan
 
 5. **Wait for code review** - Do NOT merge or checkout master until the user completes their review and gives approval
+
+## Claude Code Workflow Requirements
+
+### Context Window Management
+
+**CRITICAL**: Before starting ANY new task, Claude Code MUST check the context window usage and manage it proactively.
+
+#### When to Check Context Window
+
+- **At the start of EVERY new user prompt**: Before beginning work on any task
+- **When approaching 100,000 tokens**: Proactively warn the user
+- **Before reading large files**: Especially HTML snapshots or log files
+
+#### How to Check Context Window
+
+Monitor the token usage displayed in system warnings:
+```
+<system_warning>Token usage: 85000/200000; 115000 remaining</system_warning>
+```
+
+#### Action Thresholds
+
+| Token Usage | Remaining | Action Required |
+|------------|-----------|-----------------|
+| < 100,000  | > 100,000 | Continue normally |
+| 100,000-150,000 | 50,000-100,000 | **Warn user** - Context getting full, may need compaction soon |
+| 150,000-180,000 | 20,000-50,000 | **Strongly recommend** user runs `/compact` command |
+| > 180,000  | < 20,000  | **STOP and request** user runs `/compact` before continuing |
+
+#### Compact Command
+
+When context is too full, ask the user to run:
+```
+/compact
+```
+
+This will:
+- Summarize the conversation history
+- Reset the context window
+- Allow Claude Code to continue with a fresh context
+
+#### Example Workflow
+
+**Good**:
+```
+User: "Please add comprehensive logging to all framework components"
+
+Claude: "I notice the context window is at 150,000 tokens (30,000 remaining).
+Before proceeding with adding logging across all components, I recommend running
+the /compact command to ensure we have sufficient space to complete this task
+without interruption.
+
+Should I proceed now, or would you like to compact first?"
+```
+
+**Bad**:
+```
+User: "Please add comprehensive logging to all framework components"
+
+Claude: [Starts working without checking context]
+[Runs out of context mid-task]
+[Cannot complete the work]
+```
+
+### Logging Standards
+
+All framework components, page objects, and tests MUST implement comprehensive logging following these standards:
+
+#### Logging Levels
+
+Use appropriate logging levels for different types of messages:
+
+| Level | When to Use | Examples |
+|-------|------------|----------|
+| **DEBUG** | Detailed diagnostic information | Element located, method entry/exit, configuration values |
+| **INFO** | General informational messages about program execution | Page loaded, action completed, test started |
+| **WARNING** | Warning messages for unexpected but handled situations | Element not found (but handled), deprecated usage |
+| **ERROR** | Error messages for failures that don't stop execution | Element timeout, assertion failure, screenshot save failure |
+| **CRITICAL** | Critical errors that may cause program termination | Driver creation failure, config file missing |
+
+#### Framework Component Logging
+
+Every framework component in `src/framework/` MUST include logging:
+
+**Required imports**:
+```python
+import logging
+
+logger = logging.getLogger(__name__)
+```
+
+**Examples from `base_page.py`**:
+```python
+# DEBUG: Detailed diagnostic information
+logger.debug(f"Initialized {self.__class__.__name__} with timeout={timeout}s")
+logger.debug(f"Attempting to click element: {locator_str}")
+logger.debug(f"Successfully clicked element: {locator_str}")
+
+# INFO: Significant actions
+logger.info(f"{self.__class__.__name__}: Opening URL: {url}")
+logger.info(f"Saving HTML snapshot for {page_name}")
+
+# WARNING: Unexpected but handled situations
+logger.warning(f"Could not cleanup history files for {page_name}: {e}")
+
+# ERROR: Failures with context
+logger.error(f"Element not clickable within timeout: {locator_str} on page {current_url}")
+logger.error(f"Failed to save HTML snapshot for {page_name}: {e}", exc_info=True)
+```
+
+#### Page Object Logging
+
+Page objects in `src/pages/` SHOULD include logging for:
+
+- **Page navigation**: When navigating to the page
+- **Key actions**: Login, form submission, critical clicks
+- **Data retrieval**: Getting important text or values
+
+**Example**:
+```python
+import logging
+
+logger = logging.getLogger(__name__)
+
+class GroceryMateLoginPage(BasePage):
+    def login(self, username, password):
+        """Perform login with provided credentials."""
+        logger.info(f"Attempting login for user: {username}")
+        try:
+            self.enter_text(self.EMAIL_INPUT, username)
+            self.enter_text(self.PASSWORD_INPUT, password)
+            self.click(self.SIGN_IN_BUTTON)
+            logger.info("Login form submitted successfully")
+        except Exception as e:
+            logger.error(f"Login failed for user {username}: {e}", exc_info=True)
+            raise
+```
+
+#### Test Logging
+
+Tests SHOULD log:
+
+- **Test steps**: Major steps in the test flow
+- **Assertions**: What is being verified
+- **Test data**: Important test data being used
+
+**Use the logging utilities** from `src/framework/logger.py`:
+
+```python
+from framework.logger import get_test_logger, log_test_step, log_assertion
+
+logger = get_test_logger(__name__)
+
+def test_login_with_valid_credentials(driver):
+    log_test_step(logger, "Navigate to login page")
+    login_page = GroceryMateLoginPage(driver)
+    login_page.navigate_to_login()
+
+    log_test_step(logger, "Perform login with valid credentials")
+    login_page.login_with_config_credentials()
+
+    log_test_step(logger, "Verify successful login")
+    current_url = driver.current_url
+    expected = "not on /auth page"
+    actual = f"Current URL: {current_url}"
+    passed = 'auth' not in current_url.lower()
+
+    log_assertion(logger, "User redirected from auth page", actual, expected, passed)
+    assert passed, f"Login failed - still on auth page: {current_url}"
+```
+
+#### Assertion Messages
+
+All assertions MUST include clear, descriptive messages that provide context:
+
+**Bad**:
+```python
+assert element_visible  # No context!
+assert text == "Login"  # What element? Where?
+```
+
+**Good**:
+```python
+assert element_visible, (
+    f"Login button should be visible on page {current_url}. "
+    f"Locator: {LOGIN_BUTTON}"
+)
+
+assert text == "Login", (
+    f"Header title should be 'Login' but was '{text}'. "
+    f"Page: {current_url}, Locator: {HEADER_TITLE}"
+)
+```
+
+**Best** (with logging):
+```python
+log_assertion(logger, "Login button visibility", element_visible, True, element_visible)
+assert element_visible, (
+    f"Login button should be visible on page {current_url}. "
+    f"Locator: {LOGIN_BUTTON}, Timeout: {timeout}s"
+)
+```
+
+#### Sensitive Data Masking
+
+**ALWAYS** mask sensitive data in logs:
+
+```python
+# Mask passwords, tokens, API keys, etc.
+display_text = "****" if any(word in locator[1].lower()
+                             for word in ['password', 'token', 'secret', 'api_key'])
+                else text
+logger.debug(f"Entering text '{display_text}' into element: {locator_str}")
+```
+
+#### Exception Logging
+
+When logging exceptions, ALWAYS include the stack trace:
+
+```python
+try:
+    # Some operation
+except Exception as e:
+    logger.error(f"Operation failed: {e}", exc_info=True)  # exc_info=True includes stack trace
+    raise
+```
+
+#### Log File Organization
+
+Logs are organized as follows:
+
+- **Framework logs**: `logs/framework_YYYYMMDD_HHMMSS.log`
+- **Test logs**: `logs/test_name_YYYYMMDD_HHMMSS.log`
+- **Console output**: All INFO and above messages
+- **File output**: All DEBUG and above messages
+
+Use the logger utilities in `src/framework/logger.py`:
+
+```python
+from framework.logger import setup_logger, get_test_logger
+
+# For framework components
+logger = setup_logger(__name__, level=logging.INFO)
+
+# For tests (gets both console and file logging)
+logger = get_test_logger(__name__)
+```
+
+### Logging Best Practices Summary
+
+1. **✅ DO**: Log all significant actions with context
+2. **✅ DO**: Use appropriate log levels (DEBUG, INFO, WARNING, ERROR)
+3. **✅ DO**: Include current URL, locators, and values in error messages
+4. **✅ DO**: Mask sensitive data (passwords, tokens, API keys)
+5. **✅ DO**: Include stack traces for exceptions (`exc_info=True`)
+6. **✅ DO**: Write clear assertion messages with full context
+7. **❌ DON'T**: Log sensitive data in plain text
+8. **❌ DON'T**: Use print() statements - use logger instead
+9. **❌ DON'T**: Write assertions without descriptive messages
+10. **❌ DON'T**: Swallow exceptions without logging
+
+### Framework Extensibility
+
+This framework is designed to be reusable for **any website**, not just GroceryMate:
+
+#### GroceryMate as an Example
+
+- `src/pages/grocerymate_*.py` - Example page objects for GroceryMate
+- `tests/test_grocerymate*.py` - Example tests for GroceryMate
+
+#### Adding New Websites
+
+To test a different website:
+
+1. **Update config.yaml** with the new base URL
+2. **Create new page objects** in `src/pages/your_site_*.py`
+3. **Create new tests** in `tests/test_your_site*.py`
+4. **Follow the HTML snapshot workflow** to build page objects
+5. **Use the same logging standards** as the example files
+
+The framework components (`src/framework/`) remain unchanged and work with any website.
+
+**Example structure for testing multiple sites**:
+```
+src/pages/
+├── grocerymate_home_page.py    # Example: GroceryMate
+├── grocerymate_login_page.py   # Example: GroceryMate
+├── amazon_home_page.py          # Your site: Amazon
+├── amazon_product_page.py       # Your site: Amazon
+└── github_repo_page.py          # Your site: GitHub
+
+tests/
+├── test_grocerymate.py          # Example tests
+├── test_grocerymate_login.py    # Example tests
+├── test_amazon.py               # Your tests
+└── test_github.py               # Your tests
+```
+
+Keep the GroceryMate files as examples and reference implementations.
