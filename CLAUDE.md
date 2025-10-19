@@ -143,8 +143,25 @@ Claude: [Starts working without checking context]
 
 ### Standard Feature Development Workflow
 
+#### Before Starting New Work
+
+**CRITICAL**: ALWAYS pull latest changes from main before creating a new feature branch.
+
+```bash
+# Ensure you're on main branch
+git checkout main
+
+# Pull latest changes from remote
+git pull origin main
+```
+
+**NEVER** start a new feature without pulling the latest code from main first.
+
+#### Feature Development Steps
+
 1. **Create a new feature branch** with a clear, descriptive name
    ```bash
+   # Already on main with latest code
    git checkout -b feature/descriptive-name
    ```
 
@@ -206,7 +223,27 @@ Claude: [Starts working without checking context]
    )"
    ```
 
-5. **Wait for code review** - Do NOT merge or checkout main until the user completes their review and gives approval
+5. **STOP and wait for user confirmation that PR is merged**
+   - **CRITICAL**: After creating PR, STOP all work on this branch
+   - **NEVER** continue working on the feature branch after creating the PR
+   - Inform the user that the PR is ready for review
+   - Wait for explicit user confirmation that they have reviewed and merged the PR
+   - Do NOT assume the PR is merged - always ask or verify
+
+6. **After PR is merged - Switch back to main and pull**
+   - Once user confirms PR is merged:
+   ```bash
+   # Switch to main branch
+   git checkout main
+
+   # Pull the newly merged changes
+   git pull origin main
+   ```
+
+7. **Ready for next task**
+   - Now you're on main with all latest changes
+   - Ready to create a new feature branch for the next task
+   - Repeat from step 1 for the next feature
 
 ### Why Always Target Main/Master
 

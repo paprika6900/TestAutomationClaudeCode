@@ -11,9 +11,10 @@ This file is used by Claude Code to track current tasks, future tasks, and impor
 
 - [x] Fixed Windows ChromeDriver compatibility issue (WinError 193)
 - [x] Updated driver_manager.py to use webdriver-manager package
-- [x] Created PR #8 for Windows fix
+- [x] Created PR #8 for Windows fix (partially merged - only Windows fix, not docs)
 - [x] Reorganized documentation into README.md, CLAUDE.md, and NOTEPAD.md
-- [x] Committed and pushed all documentation changes to PR #8
+- [x] Updated Git workflow in CLAUDE.md with PR merge confirmation requirements
+- [x] Updated NOTEPAD.md with workflow improvements
 
 ### Pending Tasks
 
@@ -31,6 +32,30 @@ This file is used by Claude Code to track current tasks, future tasks, and impor
 - [ ] Add CI/CD pipeline configuration
 
 ## Important Notes
+
+### Git Workflow Requirements (Session 3 Update)
+
+**CRITICAL**: Updated CLAUDE.md with mandatory workflow steps:
+
+1. **Before starting new work**: ALWAYS pull main first
+   ```bash
+   git checkout main
+   git pull origin main
+   ```
+
+2. **After creating PR**: STOP and wait for user confirmation of merge
+   - **NEVER** continue working on feature branch after PR creation
+   - Wait for explicit user confirmation that PR is merged
+   - Do NOT assume PR is merged
+
+3. **After PR merge confirmation**: Pull main and create new branch
+   ```bash
+   git checkout main
+   git pull origin main
+   git checkout -b feature/next-task
+   ```
+
+**Why this matters**: Prevents working on stale branches, ensures all work builds on latest code, avoids merge conflicts.
 
 ### Windows Compatibility
 - **Issue**: Hardcoded Linux path `/usr/bin/chromedriver` caused WinError 193
