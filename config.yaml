@@ -1,0 +1,25 @@
+# Selenium Test Framework Configuration
+
+browser:
+  name: chrome  # chrome, firefox, edge
+  headless: false
+  window_size: 1920x1080
+  implicit_wait: 10  # seconds
+  page_load_timeout: 30  # seconds
+
+selenium:
+  screenshots_on_failure: true
+  save_html_snapshots: true
+  html_snapshots_dir: page_snapshots
+  screenshots_dir: screenshots
+
+test_data:
+  base_url: https://grocerymate.masterschool.com/
+  timeout: 30
+  login:
+    username: user@user.com
+    password: user123
+
+logging:
+  level: INFO  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
