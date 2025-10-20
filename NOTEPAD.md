@@ -1,178 +1,147 @@
 # NOTEPAD.md
 
-This file is used by Claude Code to track current tasks, future tasks, and important notes during development.
+**Purpose**: Active task tracking and session notes for Claude Code.
 
-## Current Session Notes
+**Archive**: Old sessions moved to [docs/SESSION_HISTORY.md](docs/SESSION_HISTORY.md) when this file exceeds 300 lines.
 
-**Date**: 2025-10-19 (Session Complete)
-**Status**: Session ended - ready for tomorrow
+---
 
-### Completed This Session
+## Current Session
 
-- [x] Fixed Windows ChromeDriver compatibility issue (WinError 193)
-- [x] Updated driver_manager.py to use webdriver-manager package
-- [x] Reorganized documentation into README.md, CLAUDE.md, and NOTEPAD.md
-- [x] Added critical Git workflow requirements to CLAUDE.md
-- [x] Updated NOTEPAD.md with workflow improvements
-- [x] Resolved merge conflicts in PR #9
-- [x] PR #9 merged successfully to main
-- [x] Pulled main branch with all merged changes
+**Date**: 2025-10-20 (Morning Session)
+**Branch**: main
+**Status**: ✅ COMPLETED - Documentation improvements committed
 
-### Next Session Tasks
+### Accomplishments
 
-- [ ] Review PR #7 status (may need to close/recreate after reorganization)
+- [x] Analyzed current documentation structure
+- [x] Created streamlined CLAUDE.md (189 lines, down from 529)
+- [x] Created docs/ARCHITECTURE.md for technical details (568 lines)
+- [x] Optimized README.md for scannability (324 lines, down from 452)
+- [x] Archived old sessions to docs/SESSION_HISTORY.md
+- [x] Committed documentation improvements (commit 4833747)
+
+**Results**: Successfully improved documentation content, handling, and size. Added README.md reading triggers to CLAUDE.md to force appropriate file reading.
+
+### Session Goals
+
+Improve documentation structure per user request:
+1. **Content**: Better organized, scannable, actionable
+2. **Handling**: Clear triggers to read README.md when needed
+3. **Size**: Reduced by ~50% while keeping all information
+
+---
+
+## Pending Tasks
+
 - [ ] Test framework on Windows to verify webdriver-manager fix
-- [ ] Ready for new feature development with updated workflow
+- [ ] Review PR #7 status (may need to close/recreate after docs reorganization)
 
-### Future Tasks
+---
+
+## Future Tasks
 
 - [ ] Add support for Edge browser
 - [ ] Create example tests for additional websites
 - [ ] Add screenshot comparison utilities
 - [ ] Implement parallel test execution
-- [ ] Add CI/CD pipeline configuration
+- [ ] Add CI/CD pipeline configuration (GitHub Actions)
+
+---
 
 ## Important Notes
 
-### Git Workflow Requirements (Session 3 Update)
+### Documentation Structure (Updated Session 4)
 
-**CRITICAL**: Updated CLAUDE.md with mandatory workflow steps:
+**New streamlined structure**:
 
-1. **Before starting new work**: ALWAYS pull main first
-   ```bash
-   git checkout main
-   git pull origin main
-   ```
+| File | Lines | Purpose | Read When |
+|------|-------|---------|-----------|
+| **CLAUDE.md** | 189 (was 529) | Quick workflow reference | Every session start |
+| **README.md** | 324 (was 452) | Project overview, setup, quick start | Setup questions, explaining to others |
+| **NOTEPAD.md** | ~150 (this file) | Active tasks and current session | Session start, task tracking |
+| **docs/ARCHITECTURE.md** | ~600 | Detailed technical reference | Implementing features, need examples |
+| **docs/SESSION_HISTORY.md** | Archive | Completed session history | Reference past work |
 
-2. **After creating PR**: STOP and wait for user confirmation of merge
-   - **NEVER** continue working on feature branch after PR creation
-   - Wait for explicit user confirmation that PR is merged
-   - Do NOT assume PR is merged
+**Key improvements**:
+- **64% reduction in CLAUDE.md** - Now scannable quick reference
+- **README trigger in CLAUDE.md** - Forces reading when user asks setup/architecture questions
+- **Separated concerns** - Workflow vs Documentation vs Technical Details
+- **Tables over prose** - Faster scanning
+- **Archived history** - Keep NOTEPAD.md lean
 
-3. **After PR merge confirmation**: Pull main and create new branch
-   ```bash
-   git checkout main
-   git pull origin main
-   git checkout -b feature/next-task
-   ```
+### Git Workflow (Critical)
 
-**Why this matters**: Prevents working on stale branches, ensures all work builds on latest code, avoids merge conflicts.
+**Before ANY work**:
+```bash
+git checkout main
+git pull origin main
+```
 
-### Windows Compatibility
-- **Issue**: Hardcoded Linux path `/usr/bin/chromedriver` caused WinError 193
-- **Solution**: Using `webdriver-manager` package for cross-platform driver management
-- **Testing**: Need to verify on actual Windows machine after merge
-
-### Documentation Structure (Updated Session 3)
-- **README.md**: Project documentation, setup, architecture, usage (452 lines)
-  - Project overview with key features
-  - Complete project structure
-  - Development setup (Windows, Linux, macOS)
-  - Running tests guide
-  - Architecture deep-dive
-  - HTML snapshot workflow with examples
-  - Framework extensibility for multiple websites
-
-- **CLAUDE.md**: Claude Code workflow, process instructions, git workflow (492 lines)
-  - Note-taking process with NOTEPAD.md integration
-  - Context window management (CRITICAL)
-  - Git workflow (always target main)
-  - Logging standards with examples
-  - Code quality standards (POM, locators, tests)
-
-- **NOTEPAD.md**: Current tasks, notes, tracking (127 lines)
-  - Current session notes
-  - Active/pending/future tasks
-  - Important notes and discoveries
-  - Session history
-  - Known issues tracking
-  - Questions for user
-  - Useful commands
-  - Code review checklist
-
-### GroceryMate Test Coverage
-**Implemented**:
-- Home page: 4 tests (navigation, search, icons)
-- Login page: 4 tests (login flow, elements, navigation)
-- HTML capture: 2 tests (home, login)
-
-**Total**: 10 passing tests
+**After creating PR**:
+1. 🛑 **STOP all work**
+2. Wait for user confirmation of merge
+3. Then: `git checkout main && git pull origin main`
 
 ### Configuration
-- Base URL: `https://grocerymate.masterschool.com/`
-- Default browser: Chrome
-- Test credentials configured in `config.yaml`
 
-## Session History
+- **Base URL**: `https://grocerymate.masterschool.com/`
+- **Browser**: Chrome (auto-managed via webdriver-manager)
+- **Test credentials**: Configured in `config.yaml`
 
-### Session 1: Initial Framework Setup (PR #1-4)
-- Created Selenium framework with Page Object Model
-- Implemented HTML snapshot system
-- Added comprehensive logging
-- Created GroceryMate example implementation
+### GroceryMate Test Coverage
 
-### Session 2: Workflow Documentation (PR #7)
-- Updated Git workflow to always target main
-- Added context window management requirements
-- Documented logging standards
+**Current Status**: 10 passing tests
+- Home page: 4 tests
+- Login page: 4 tests
+- HTML capture: 2 tests
 
-### Session 3: Windows Compatibility & Documentation (PR #8, PR #9) - COMPLETED
-- Fixed ChromeDriver path issue for Windows (WinError 193)
-- Implemented webdriver-manager for cross-platform support
-- Reorganized documentation structure:
-  - Created README.md (452 lines) - project documentation
-  - Updated CLAUDE.md (492 lines) - workflow and process
-  - Created NOTEPAD.md (181 lines) - task tracking
-- Added critical Git workflow requirements:
-  - ALWAYS pull main before starting new work
-  - STOP after creating PR and wait for merge confirmation
-  - Pull main after merge before next task
-- Set main as default branch on GitHub
-- All content preserved across three files
-- **Result**: PR #9 merged successfully, all documentation reorganized
+---
 
 ## Known Issues
 
 ### Open Issues
-None currently
+
+None at this time.
 
 ### Resolved Issues
-- ✅ WinError 193 on Windows (Fixed in PR #8)
-- ✅ Git workflow confusion with feature branches (Documented in PR #7)
-- ✅ Missing logging in framework components (Fixed in PR #3)
+
+- ✅ WinError 193 on Windows (Fixed in Session 3 - webdriver-manager)
+- ✅ Documentation too verbose (Fixed in Session 4 - reorganized)
+- ✅ Git workflow confusion (Fixed in Session 3 - documented in CLAUDE.md)
+
+---
 
 ## Questions for User
 
 None at this time.
 
+---
+
 ## Useful Commands
 
-### Run all tests
 ```bash
-pytest -v
-```
+# Pull latest code (ALWAYS do this first!)
+git checkout main && git pull origin main
 
-### Run smoke tests only
-```bash
+# Run tests
 pytest -m smoke -v
-```
+pytest tests/test_grocerymate.py -v
 
-### Capture HTML snapshots
-```bash
+# Capture HTML snapshots
 pytest tests/test_html_snapshots.py -m html_capture -v
+
+# Create PR
+gh pr create --base main --title "..." --body "..."
+
+# Check PR status
+gh pr view <number>
+
+# Check file sizes
+wc -l CLAUDE.md README.md NOTEPAD.md
 ```
 
-### Run tests in headless mode
-Update `config.yaml`:
-```yaml
-browser:
-  headless: true
-```
-
-### Check test coverage
-```bash
-pytest --cov=src --cov-report=html
-```
+---
 
 ## Code Review Checklist
 
@@ -180,8 +149,9 @@ When reviewing PRs, verify:
 - [ ] All tests pass
 - [ ] Logging added to new components
 - [ ] Documentation updated if needed
-- [ ] No sensitive data in logs
-- [ ] Code follows POM pattern
-- [ ] Locators are semantic and stable
-- [ ] Assertion messages are clear
+- [ ] No sensitive data in logs or code
+- [ ] Code follows POM pattern (see docs/ARCHITECTURE.md)
+- [ ] Locators are semantic and stable (CSS preferred)
+- [ ] Assertion messages are clear and include context
 - [ ] No hardcoded paths or URLs (use config.yaml)
+- [ ] NOTEPAD.md updated with session notes
